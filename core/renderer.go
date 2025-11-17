@@ -45,6 +45,30 @@ func (e *EditorCore) DisplayBuffer() {
 	}
 }
 
+// TODO: IMPLEMENT MESSAGES IN STATUS BAR OR SOMETHING ELSE
+
+/* type EditorCore struct {
+    // ... existing fields
+    statusMessage   string
+    statusMessageTime time.Time
+}
+
+func (e *EditorCore) SetStatusMessage(msg string) {
+    e.statusMessage = msg
+    e.statusMessageTime = time.Now()
+}
+
+func (e *EditorCore) DisplayStatus() {
+    // ... existing status display code
+
+    // Show message if it's recent (e.g., within 3 seconds)
+    if time.Since(e.statusMessageTime) < 3*time.Second {
+        // Display e.statusMessage in status bar or separate line
+    } else {
+        e.statusMessage = "" // Clear old message
+    }
+} */
+
 func (e *EditorCore) DisplayStatus() {
 	var col int
 
