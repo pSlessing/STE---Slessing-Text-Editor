@@ -5,26 +5,24 @@ import (
 	"slessingTextEditor/core"
 )
 
-// modules/docker/docker.go
-
 type GitPlugin struct {
 	core *core.EditorCore
 }
 
 func (g *GitPlugin) Name() string {
-	return "docker"
+	return "git"
 }
 
 func (g *GitPlugin) Commands() []core.Command {
 	return []core.Command{
 		{
-			Name:        "git pull",
+			Name:        "gitpull",
 			Aliases:     []string{"gp"},
 			Description: "Pull from repo",
 			Execute:     g.PullCommand,
 		},
 		{
-			Name:        "git status",
+			Name:        "gitstatus",
 			Aliases:     []string{"gs"},
 			Description: "View Git Status",
 			Execute:     g.StatusCommand,

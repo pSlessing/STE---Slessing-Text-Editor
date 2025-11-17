@@ -165,3 +165,13 @@ func (*EditorCore) cmdHelp(*EditorCore, []string) error {
 	os.Exit(0)
 	return nil
 }
+
+func (e *EditorCore) cmdPlugins(*EditorCore, []string) error {
+	commands := e.ListCommands()
+	i := 0
+	for i < len(commands) {
+		e.PrintMessageStyle(e.Cols/2, i, e.Styles.Message, commands[i])
+		i++
+	}
+	return nil
+}

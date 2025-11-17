@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -33,6 +34,9 @@ type EditorCore struct {
 
 	//Constants, could maybe be moved into a settings/config file
 	MaxWidth int
+
+	statusMessage     string
+	statusMessageTime time.Time
 }
 
 func NewEditor() (*EditorCore, error) {
@@ -60,8 +64,10 @@ func NewEditor() (*EditorCore, error) {
 			Linecount: tcell.StyleDefault.Foreground(tcell.ColorDarkCyan).Background(tcell.ColorWhite),
 			Error:     tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorRed),
 		},
-		SettingsLength: 10,
-		MaxWidth:       78,
+		SettingsLength:    10,
+		MaxWidth:          78,
+		statusMessage:     "",
+		statusMessageTime: time.Now(),
 	}
 	settings, err := LoadSettings()
 	if err != nil {
@@ -118,7 +124,7 @@ func (e *EditorCore) registerBuiltInCommands() {
 			Name:        "help",
 			Aliases:     []string{"h", "?"},
 			Description: "Show available commands",
-			Execute:     e.cmdHelp,
+			Execute:     e.cmdPlugins,
 		},
 	}
 
@@ -151,11 +157,10 @@ func (e *EditorCore) mainLoop() {
 			e.Cols = e.MaxWidth
 		}
 		e.Terminal.Clear()
+		e.inputHandling()
 		e.DisplayBuffer()
 		e.DisplayStatus()
 		e.Terminal.Show()
-		e.inputHandling()
-		//TERMINAL.SetCursor(e.CursorX, e.CursorY)
 	}
 }
 
