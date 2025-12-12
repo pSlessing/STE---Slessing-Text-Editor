@@ -84,3 +84,27 @@ func (e *EditorCore) OpenFile(filename string) ([][]rune, error) {
 	e.SourceFile = filename
 	return textBuffer, nil
 }
+
+// Note
+// Returns both directories and files, something should probably be done so this is used properly
+func (e *EditorCore) GetCurrentPathFiles() ([]string, error) {
+	//
+	currentWd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	entries, err := os.ReadDir(currentWd)
+
+	if err != nil {
+		return nil, err
+	}
+
+	returnSlice := []string{}
+
+	for _, e := range entries {
+		returnSlice = append(returnSlice, e.Name())
+	}
+
+	return returnSlice, nil
+
+}
