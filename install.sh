@@ -17,13 +17,13 @@ INSTALL_DIR="/usr/local/bin"
 
 echo -e "${GREEN}=== STE Text Editor Installation ===${NC}\n"
 
-# Check if Go is installed
-echo -e "${YELLOW}Checking for Go installation...${NC}"
-if ! command -v go &> /dev/null; then
-    echo -e "${RED}Error: Go is not installed. Please install Go 1.16 or higher.${NC}"
-    echo "Visit: https://golang.org/doc/install"
-    exit 1
-fi
+# Check if Go is installed | NEEDS REFACTORING; JUST RUN GO
+#echo -e "${YELLOW}Checking for Go installation...${NC}"
+#if ! command -v go &> /dev/null; then
+#    echo -e "${RED}Error: Go is not installed. Please install Go 1.16 or higher.${NC}"
+#    echo "Visit: https://golang.org/doc/install"
+#    exit 1
+#fi
 
 GO_VERSION=$(go version | awk '{print $3}')
 echo -e "${GREEN}Found Go: ${GO_VERSION}${NC}\n"
