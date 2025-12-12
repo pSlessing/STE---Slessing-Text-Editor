@@ -1,4 +1,4 @@
-package gitPlugin
+package main
 
 import (
 	"os/exec"
@@ -66,9 +66,6 @@ func (g *GitPlugin) PullCommand(e *core.EditorCore, args []string) error {
 }
 
 func (g *GitPlugin) StatusCommand(e *core.EditorCore, args []string) error {
-	// Get container name from args
-	// Run docker logs
-	// Display in buffer
 	return nil
 }
 
