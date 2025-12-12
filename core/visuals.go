@@ -368,6 +368,7 @@ func (e *EditorCore) loopChangeSettings() {
 							}
 
 						}
+						e.Terminal.Clear()
 						return
 					}
 				case tcell.KeyEsc:
