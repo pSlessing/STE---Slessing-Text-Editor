@@ -102,7 +102,11 @@ func (e *EditorCore) GetCurrentPathFiles() ([]string, error) {
 	returnSlice := []string{}
 
 	for _, e := range entries {
-		returnSlice = append(returnSlice, e.Name())
+		//For now, dont handle directories in the working directory
+		//TODO: Add that later
+		if !e.IsDir() {
+			returnSlice = append(returnSlice, e.Name())
+		}
 	}
 
 	return returnSlice, nil
