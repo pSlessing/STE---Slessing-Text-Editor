@@ -22,7 +22,7 @@ A basic text editor for the terminal, under active development
 
 ### Building from Source
 
-0. Psst, you can use the install script ```bash install.sh```
+0. Psst, you can use the install script ```bash make```
 
 1. Clone the repository and navigate to the project directory
 
