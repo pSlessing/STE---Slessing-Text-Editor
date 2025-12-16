@@ -18,6 +18,11 @@ func (e *EditorCore) cmdWrite(*EditorCore, []string) error {
 	return nil
 }
 
+func (e *EditorCore) cmdClear(*EditorCore, []string) error {
+	e.TextBuffer = [][]rune{{}}
+	return nil
+}
+
 func (e *EditorCore) cmdSettings(*EditorCore, []string) error {
 	e.loopChangeSettings()
 	return nil

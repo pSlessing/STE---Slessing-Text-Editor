@@ -126,6 +126,12 @@ func (e *EditorCore) registerBuiltInCommands() {
 			Description: "Show available commands",
 			Execute:     e.cmdPlugins,
 		},
+		{
+			Name:        "clear",
+			Aliases:     []string{"c"},
+			Description: "Clear the text buffer",
+			Execute:     e.cmdClear,
+		},
 	}
 
 	for _, cmd := range builtins {
