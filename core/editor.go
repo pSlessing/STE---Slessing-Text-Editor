@@ -148,6 +148,11 @@ func (e *EditorCore) registerBuiltInCommands() {
 	}
 }
 
+func (e *EditorCore) SetStatusMessage(msg string) {
+	e.statusMessage = msg
+	e.statusMessageTime = time.Now()
+}
+
 func (e *EditorCore) Run() {
 	// Load plugins before starting
 	if err := e.LoadPluginsFromDirectory("./modules"); err != nil {

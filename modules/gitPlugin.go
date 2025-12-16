@@ -84,6 +84,7 @@ func (g *GitPlugin) PullCommand(e *core.EditorCore, args []string) error {
 }
 
 func (g *GitPlugin) StatusCommand(e *core.EditorCore, args []string) error {
+	e.SetStatusMessage("Status is good :))")
 	return nil
 }
 

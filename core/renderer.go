@@ -2,6 +2,7 @@ package core
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/mattn/go-runewidth"
@@ -95,6 +96,13 @@ func (e *EditorCore) DisplayStatus() {
 	e.PrintMessageStyle(e.Cols-4, e.Rows+1, e.Styles.Status, "col")
 	e.PrintMessageStyle(e.Cols-8, e.Rows+1, e.Styles.Status, lineNumberStr)
 	e.PrintMessageStyle(e.Cols-12, e.Rows+1, e.Styles.Status, "row")
+
+	if time.Since(e.statusMessageTime) < 3*time.Second {
+		// Display e.statusMessage in status bar or separate line
+		e.PrintMessageStyle(e.Cols-len(e.statusMessage), 0, e.Styles.Status, e.statusMessage)
+	} else {
+		e.statusMessage = ""
+	}
 }
 
 func (e *EditorCore) DisplayLineNumber(row int, textBufferRow int) {
