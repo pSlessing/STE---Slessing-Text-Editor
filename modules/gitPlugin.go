@@ -17,7 +17,7 @@ func (g *GitPlugin) Commands() []core.Command {
 	return []core.Command{
 		{
 			Name:        "gitpull",
-			Aliases:     []string{"gp"},
+			Aliases:     []string{"gpl"},
 			Description: "Pull from repo",
 			Execute:     g.PullCommand,
 		},
@@ -26,6 +26,24 @@ func (g *GitPlugin) Commands() []core.Command {
 			Aliases:     []string{"gs"},
 			Description: "View Git Status",
 			Execute:     g.StatusCommand,
+		},
+		{
+			Name:        "gitpush",
+			Aliases:     []string{"gps"},
+			Description: "Pull from repo",
+			Execute:     g.PushCommand,
+		},
+		{
+			Name:        "gitcommit",
+			Aliases:     []string{"gc"},
+			Description: "Pull from repo",
+			Execute:     g.CommitCommand,
+		},
+		{
+			Name:        "gitbranch",
+			Aliases:     []string{"gb"},
+			Description: "Switch the branch you're currently on",
+			Execute:     g.ChangeBranchCommand,
 		},
 	}
 }
@@ -66,6 +84,18 @@ func (g *GitPlugin) PullCommand(e *core.EditorCore, args []string) error {
 }
 
 func (g *GitPlugin) StatusCommand(e *core.EditorCore, args []string) error {
+	return nil
+}
+
+func (g *GitPlugin) CommitCommand(e *core.EditorCore, args []string) error {
+	return nil
+}
+
+func (g *GitPlugin) PushCommand(e *core.EditorCore, args []string) error {
+	return nil
+}
+
+func (g *GitPlugin) ChangeBranchCommand(e *core.EditorCore, args []string) error {
 	return nil
 }
 
