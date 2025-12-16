@@ -195,7 +195,7 @@ func (e *EditorCore) cmdOpen(*EditorCore, []string) error {
 }
 
 func (*EditorCore) cmdHelp(*EditorCore, []string) error {
-	os.Exit(0)
+	//TODO: Insert some form of help here lmao
 	return nil
 }
 
