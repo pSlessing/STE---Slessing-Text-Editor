@@ -2,6 +2,7 @@ package main
 
 import (
 	"os/exec"
+	"path/filepath"
 	"slessingTextEditor/core"
 )
 
@@ -58,18 +59,22 @@ func (g *GitPlugin) Cleanup() error {
 }
 
 func (g *GitPlugin) PullCommand(e *core.EditorCore, args []string) error {
-	// Run docker ps command
 	cmd := exec.Command("git", "pull")
-	out, err := cmd.Output()
+	cmd.Dir = filepath.Dir(g.core.SourceFile)
+	out, err := cmd.CombinedOutput()
+
+	message := string(out)
 	if err != nil {
-		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
+		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error,
+			"Git pull failed: "+message+" ("+err.Error()+")")
 		g.core.Terminal.Show()
 		return nil
 	}
 
-	g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Message, string(out))
+	g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Message, message)
 	g.core.Terminal.Show()
 
+	// Reload the file after pull
 	openedTextBuffer, err := g.core.OpenFile(g.core.SourceFile)
 	if err != nil {
 		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
@@ -84,19 +89,47 @@ func (g *GitPlugin) PullCommand(e *core.EditorCore, args []string) error {
 }
 
 func (g *GitPlugin) StatusCommand(e *core.EditorCore, args []string) error {
-	e.SetStatusMessage("Status is good :))")
+	cmd := exec.Command("git", "status")
+	cmd.Dir = filepath.Dir(g.core.SourceFile)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
+		g.core.Terminal.Show()
+		return nil
+	}
+	g.core.SetStatusMessage(string(out))
 	return nil
 }
 
 func (g *GitPlugin) CommitCommand(e *core.EditorCore, args []string) error {
+	cmd := exec.Command("git", "commit", "-m", args[0])
+	cmd.Dir = filepath.Dir(g.core.SourceFile)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
+		g.core.Terminal.Show()
+		return nil
+	}
+	g.core.SetStatusMessage(string(out))
 	return nil
 }
 
 func (g *GitPlugin) PushCommand(e *core.EditorCore, args []string) error {
+	cmd := exec.Command("git", "push")
+	cmd.Dir = filepath.Dir(g.core.SourceFile)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
+		g.core.Terminal.Show()
+		return nil
+	}
+	g.core.SetStatusMessage("result" + string(out))
+	g.core.SetStatusMessage("Hi!")
 	return nil
 }
 
 func (g *GitPlugin) ChangeBranchCommand(e *core.EditorCore, args []string) error {
+	g.core.SetStatusMessage("Git branch command was ran")
 	return nil
 }
 
