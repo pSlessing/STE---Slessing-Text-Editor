@@ -124,13 +124,19 @@ func (e *EditorCore) registerBuiltInCommands() {
 			Name:        "help",
 			Aliases:     []string{"h", "?"},
 			Description: "Show available commands",
-			Execute:     e.cmdPlugins,
+			Execute:     e.cmdHelp,
 		},
 		{
 			Name:        "clear",
 			Aliases:     []string{"c"},
 			Description: "Clear the text buffer",
 			Execute:     e.cmdClear,
+		},
+		{
+			Name:        "plugins",
+			Aliases:     []string{"p"},
+			Description: "List the current plugins",
+			Execute:     e.cmdPlugins,
 		},
 	}
 

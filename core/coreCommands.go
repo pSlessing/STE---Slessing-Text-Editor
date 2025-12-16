@@ -194,12 +194,12 @@ func (e *EditorCore) cmdOpen(*EditorCore, []string) error {
 	}
 }
 
-func (*EditorCore) cmdHelp(*EditorCore, []string) error {
-	//TODO: Insert some form of help here lmao
+func (*EditorCore) cmdPlugins(*EditorCore, []string) error {
+	//TODO: Insert some form of plugin listing here
 	return nil
 }
 
-func (e *EditorCore) cmdPlugins(*EditorCore, []string) error {
+func (e *EditorCore) cmdHelp(*EditorCore, []string) error {
 	commands := e.ListCommands()
 	i := 0
 	for i < len(commands) {
