@@ -7,7 +7,7 @@ A basic text editor for the terminal, under active development
 ### Current Features
 - **Command-based interface** - Main loop with commands executed via status bar
 - **File operations** - Open, Save, and SaveAs commands for file management
-- **Customizability** - Customizable color schemes with session persistence- Fuzzy file search within current directory
+- **Customizability** - Customizable color schemes with session persistence - Fuzzy file search within current directory
 - **Autocomplete** - Autocomplete when opening files using tab to complete to the current guess
 
 ### Upcoming Features
