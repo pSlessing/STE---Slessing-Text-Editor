@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"os/exec"
 	"path/filepath"
 	"slessingTextEditor/core"
@@ -61,6 +62,10 @@ func (g *GitPlugin) Cleanup() error {
 func (g *GitPlugin) PullCommand(e *core.EditorCore, args []string) error {
 	cmd := exec.Command("git", "pull")
 	cmd.Dir = filepath.Dir(g.core.SourceFile)
+	if g.core.SourceFile == "" {
+		currentWd, _ := os.Getwd()
+		cmd.Dir = filepath.Dir(currentWd)
+	}
 	out, err := cmd.CombinedOutput()
 
 	message := string(out)
