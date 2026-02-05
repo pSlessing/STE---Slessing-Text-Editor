@@ -140,7 +140,6 @@ func (g *GitPlugin) PushCommand(e *core.EditorCore, args []string) error {
 		return nil
 	}
 	g.core.SetStatusMessage("result" + string(out))
-	g.core.SetStatusMessage("Hi!")
 	return nil
 }
 
