@@ -9,6 +9,7 @@ import (
 
 type GitPlugin struct {
 	core *core.EditorCore
+	wd   string
 }
 
 func (g *GitPlugin) Name() string {
@@ -52,6 +53,12 @@ func (g *GitPlugin) Commands() []core.Command {
 
 func (g *GitPlugin) Initialize(editorCore *core.EditorCore) error {
 	g.core = editorCore
+	if g.core.SourceFile == "" {
+		wdString, _ := os.Getwd()
+		g.wd = wdString + "/"
+	} else {
+		g.wd = g.core.SourceFile
+	}
 	return nil
 }
 
@@ -61,11 +68,7 @@ func (g *GitPlugin) Cleanup() error {
 
 func (g *GitPlugin) PullCommand(e *core.EditorCore, args []string) error {
 	cmd := exec.Command("git", "pull")
-	cmd.Dir = filepath.Dir(g.core.SourceFile)
-	if g.core.SourceFile == "" {
-		currentWd, _ := os.Getwd()
-		cmd.Dir = filepath.Dir(currentWd)
-	}
+	cmd.Dir = filepath.Dir(g.wd)
 	out, err := cmd.CombinedOutput()
 
 	message := string(out)
@@ -95,7 +98,7 @@ func (g *GitPlugin) PullCommand(e *core.EditorCore, args []string) error {
 
 func (g *GitPlugin) StatusCommand(e *core.EditorCore, args []string) error {
 	cmd := exec.Command("git", "status")
-	cmd.Dir = filepath.Dir(g.core.SourceFile)
+	cmd.Dir = filepath.Dir(g.wd)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
@@ -107,8 +110,16 @@ func (g *GitPlugin) StatusCommand(e *core.EditorCore, args []string) error {
 }
 
 func (g *GitPlugin) CommitCommand(e *core.EditorCore, args []string) error {
-	cmd := exec.Command("git", "commit", "-m", args[0])
-	cmd.Dir = filepath.Dir(g.core.SourceFile)
+	commitMSG := ""
+	if len(args) == 0 {
+		commitMSG = "No message provided"
+		g.core.SetStatusMessage(commitMSG)
+	} else {
+		commitMSG = args[0]
+	}
+
+	cmd := exec.Command("git", "commit", "-a", "-m", "\""+commitMSG+"\"")
+	cmd.Dir = filepath.Dir(g.wd)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
@@ -121,7 +132,7 @@ func (g *GitPlugin) CommitCommand(e *core.EditorCore, args []string) error {
 
 func (g *GitPlugin) PushCommand(e *core.EditorCore, args []string) error {
 	cmd := exec.Command("git", "push")
-	cmd.Dir = filepath.Dir(g.core.SourceFile)
+	cmd.Dir = filepath.Dir(g.wd)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
