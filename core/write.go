@@ -125,26 +125,23 @@ func (e *EditorCore) loopWrite() {
 			} else if mod == tcell.ModCtrl {
 				switch key {
 				case tcell.KeyLeft:
-					if e.CursorY+e.OffsetY > 0 {
-						// Only allow moving right if not past end of line
-						if e.CursorX-e.LineCountWidth+e.OffsetX > 0 {
-							currChar := 'a'
-							// While loop here
-							for currChar != ' ' {
-								e.CursorX--
-								// Horizontal scroll right if needed
-								if e.CursorX < e.Cols-e.LineCountWidth {
-									e.OffsetX--
-									e.CursorX = e.Cols - e.LineCountWidth - 1
-								}
-								// Check bounds before accessing array
-								currentPos := e.CursorX - e.LineCountWidth + e.OffsetX
-								if currentPos == 0 {
-									currChar = ' '
-									break
-								}
-								currChar = e.TextBuffer[e.CursorY+e.OffsetY][currentPos]
+					if e.CursorX-e.LineCountWidth+e.OffsetX > 0 {
+						currChar := 'a'
+						// While loop here
+						for currChar != ' ' {
+							e.CursorX--
+							// Horizontal scroll LEFT if needed (fixed condition)
+							if e.CursorX < 0 {
+								e.OffsetX--
+								e.CursorX = 0
 							}
+							// Check bounds before accessing array
+							currentPos := e.CursorX - e.LineCountWidth + e.OffsetX
+							if currentPos == 0 {
+								currChar = ' '
+								break
+							}
+							currChar = e.TextBuffer[e.CursorY+e.OffsetY][currentPos]
 						}
 					}
 				case tcell.KeyRight:
@@ -170,6 +167,13 @@ func (e *EditorCore) loopWrite() {
 								currChar = e.TextBuffer[e.CursorY+e.OffsetY][currentPos]
 							}
 						}
+					}
+				case tcell.KeyBackspace:
+					currChar := 'a'
+					for currChar != ' ' {
+						e.deleteAtCursor()
+						currentPos := e.CursorX - e.LineCountWidth + e.OffsetX
+						currChar = e.TextBuffer[e.CursorY+e.OffsetY][currentPos]
 					}
 				default:
 				}
