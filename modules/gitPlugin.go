@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slessingTextEditor/core"
+	"strings"
 )
 
 type GitPlugin struct {
@@ -115,7 +116,7 @@ func (g *GitPlugin) CommitCommand(e *core.EditorCore, args []string) error {
 		commitMSG = "No message provided"
 		g.core.SetStatusMessage(commitMSG)
 	} else {
-		commitMSG = args[0]
+		commitMSG = strings.Join(args, " ")
 	}
 
 	cmd := exec.Command("git", "commit", "-a", "-m", commitMSG)
