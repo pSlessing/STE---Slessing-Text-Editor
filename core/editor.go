@@ -285,7 +285,24 @@ func (e *EditorCore) inputHandling() {
 				e.InputBuffer = append(e.InputBuffer, ch)
 			}
 		} else if mod == tcell.ModCtrl {
+			switch key {
+			case tcell.KeyLeft:
+				{
 
+				}
+			case tcell.KeyRight:
+				{
+
+				}
+			case tcell.KeyUp:
+				{
+
+				}
+			case tcell.KeyDown:
+				{
+
+				}
+			}
 		} else if mod == tcell.ModAlt {
 		}
 
