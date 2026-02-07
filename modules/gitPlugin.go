@@ -118,7 +118,7 @@ func (g *GitPlugin) CommitCommand(e *core.EditorCore, args []string) error {
 		commitMSG = args[0]
 	}
 
-	cmd := exec.Command("git", "commit", "-a", "-m", "\""+commitMSG+"\"")
+	cmd := exec.Command("git", "commit", "-a", "-m", commitMSG)
 	cmd.Dir = filepath.Dir(g.wd)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
