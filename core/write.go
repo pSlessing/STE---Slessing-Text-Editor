@@ -168,6 +168,54 @@ func (e *EditorCore) loopWrite() {
 							}
 						}
 					}
+
+				case tcell.KeyUp:
+					if e.CursorY > 0 {
+						// Move cursor up within visible area
+						e.CursorY--
+					} else if e.OffsetY > 0 {
+						// Scroll up when cursor is at top
+						e.OffsetY--
+					}
+					currentLine := e.TextBuffer[e.CursorY+e.OffsetY]
+					for len(currentLine) == 0 {
+						if e.CursorY > 0 {
+							// Move cursor up within visible area
+							e.CursorY--
+						} else if e.OffsetY > 0 {
+							// Scroll up when cursor is at top
+							e.OffsetY--
+						}
+						currentLine = e.TextBuffer[e.CursorY+e.OffsetY]
+					}
+					// Adjust cursor X if moving to a shorter line
+					if e.CursorY+e.OffsetY < len(e.TextBuffer) && e.CursorX-e.LineCountWidth > len(e.TextBuffer[e.CursorY+e.OffsetY]) {
+						e.CursorX = len(e.TextBuffer[e.CursorY+e.OffsetY]) + e.LineCountWidth
+					}
+				case tcell.KeyDown:
+					if e.CursorY < e.Rows-1 && e.CursorY+e.OffsetY+1 < len(e.TextBuffer) {
+						// Move cursor down within visible area
+						e.CursorY++
+					} else if e.OffsetY+e.Rows < len(e.TextBuffer) {
+						// Scroll down when cursor is at bottom
+						e.OffsetY++
+					}
+
+					currentLine := e.TextBuffer[e.CursorY+e.OffsetY]
+					for len(currentLine) == 0 {
+						if e.CursorY < e.Rows-1 && e.CursorY+e.OffsetY+1 < len(e.TextBuffer) {
+							// Move cursor down within visible area
+							e.CursorY++
+						} else if e.OffsetY+e.Rows < len(e.TextBuffer) {
+							// Scroll down when cursor is at bottom
+							e.OffsetY++
+						}
+						currentLine = e.TextBuffer[e.CursorY+e.OffsetY]
+					}
+					// Adjust cursor X if moving to a shorter line
+					if e.CursorY+e.OffsetY < len(e.TextBuffer) && e.CursorX-e.LineCountWidth > len(e.TextBuffer[e.CursorY+e.OffsetY]) {
+						e.CursorX = len(e.TextBuffer[e.CursorY+e.OffsetY]) + e.LineCountWidth
+					}
 				case tcell.KeyBackspace:
 					currChar := 'a'
 					for currChar != ' ' {
