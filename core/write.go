@@ -216,16 +216,50 @@ func (e *EditorCore) loopWrite() {
 					if e.CursorY+e.OffsetY < len(e.TextBuffer) && e.CursorX-e.LineCountWidth > len(e.TextBuffer[e.CursorY+e.OffsetY]) {
 						e.CursorX = len(e.TextBuffer[e.CursorY+e.OffsetY]) + e.LineCountWidth
 					}
-				case tcell.KeyBackspace:
-					currChar := 'a'
-					for currChar != ' ' {
-						e.deleteAtCursor()
-						currentPos := e.CursorX - e.LineCountWidth + e.OffsetX
-						currChar = e.TextBuffer[e.CursorY+e.OffsetY][currentPos]
-					}
 				default:
 				}
 			} else if mod == tcell.ModAlt {
+				switch key {
+				case tcell.KeyBackspace, tcell.KeyBackspace2:
+					for {
+						currentPos := e.CursorX - e.LineCountWidth + e.OffsetX
+						if e.CursorY+e.OffsetY >= len(e.TextBuffer) {
+							break
+						}
+						currentLine := e.TextBuffer[e.CursorY+e.OffsetY]
+						if currentPos <= 0 {
+							e.deleteAtCursor()
+							break
+						}
+						if currentPos > len(currentLine) {
+							break
+						}
+						charToDelete := currentLine[currentPos-1]
+						if e.CursorX == e.LineCountWidth && e.OffsetX > 0 {
+							e.OffsetX--
+						}
+						e.deleteAtCursor()
+						if e.CursorY < 0 {
+							e.OffsetY += e.CursorY
+							e.CursorY = 0
+						}
+						visibleRow := e.CursorY + e.OffsetY
+						if visibleRow >= 0 && visibleRow < len(e.TextBuffer) {
+							line := e.TextBuffer[visibleRow]
+							if e.OffsetX >= len(line) && e.OffsetX > 0 {
+								e.OffsetX--
+								e.CursorX++
+							}
+						}
+						if e.CursorX < e.LineCountWidth && e.OffsetX > 0 {
+							e.OffsetX--
+							e.CursorX = e.LineCountWidth
+						}
+						if charToDelete == ' ' {
+							break
+						}
+					}
+				}
 
 			}
 
