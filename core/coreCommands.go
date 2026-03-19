@@ -83,13 +83,26 @@ func (e *EditorCore) cmdSave(*EditorCore, []string) error {
 
 func (e *EditorCore) cmdSaveAs(*EditorCore, []string) error {
 	var saveBuffer []rune
+	bestGuess := ""
+
+	updateGuess := func() {
+		candidates, err := getFilesForPrefix(string(saveBuffer))
+		if err != nil || len(candidates) == 0 {
+			bestGuess = ""
+			return
+		}
+		bestGuess = candidates[0]
+	}
 
 	for {
 		e.Terminal.Clear()
 		e.DisplayBuffer()
 		e.DisplayStatus()
 		e.PrintMessageStyle((e.Cols/2)-e.LineCountWidth, (e.Rows / 2), e.Styles.Message, "Save As:")
-		e.PrintMessageStyle((e.Cols/2)-e.LineCountWidth, (e.Rows/2)+1, e.Styles.Message, string(saveBuffer))
+
+		guessStyle := e.Styles.Message.Attributes(tcell.AttrItalic)
+		e.PrintMessageStyle((e.Cols/2)-e.LineCountWidth, (e.Rows/2)+1, guessStyle, string(bestGuess))
+		e.PrintMessageStyle((e.Cols/2)-e.LineCountWidth, (e.Rows/2)+1, e.Styles.Message.Attributes(tcell.AttrBold), string(saveBuffer))
 		e.Terminal.Show()
 
 		event := e.Terminal.PollEvent()
@@ -114,10 +127,17 @@ func (e *EditorCore) cmdSaveAs(*EditorCore, []string) error {
 				if len(saveBuffer) > 0 {
 					saveBuffer = saveBuffer[:len(saveBuffer)-1]
 				}
+				updateGuess()
 			} else if ev.Key() == tcell.KeyEscape {
 				return nil
+			} else if ev.Key() == tcell.KeyTAB {
+				if bestGuess != "" {
+					saveBuffer = []rune(bestGuess)
+					updateGuess()
+				}
 			} else if ev.Rune() != 0 {
 				saveBuffer = append(saveBuffer, ev.Rune())
+				updateGuess()
 			}
 		}
 	}
