@@ -9,6 +9,7 @@ import (
 )
 
 func (e *EditorCore) cmdQuit(*EditorCore, []string) error {
+	e.Terminal.Fini()
 	os.Exit(0)
 	return nil
 }

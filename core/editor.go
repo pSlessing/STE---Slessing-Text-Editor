@@ -195,6 +195,10 @@ func (e *EditorCore) handleCommand() {
 	if err := e.ExecuteCommand(cmdName, args); err != nil {
 		e.ShowError(err.Error())
 	}
+	e.Terminal.Clear()
+	e.DisplayBuffer()
+	e.DisplayStatus()
+	e.Terminal.Show()
 }
 
 func (e *EditorCore) ShowError(err string) {
