@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -126,17 +125,15 @@ func (e *EditorCore) cmdSaveAs(*EditorCore, []string) error {
 
 func (e *EditorCore) cmdOpen(*EditorCore, []string) error {
 	var openBuffer []rune
-
 	bestGuess := ""
 
-	//Get files in directory
-	currentDirFiles, err := e.GetCurrentPathFiles()
-	if err != nil {
-		// Show error but continue with current buffer
-		e.PrintMessageStyle(0, e.Rows, e.Styles.Error, "Error getting names of files")
-		e.Terminal.Show()
-		e.Terminal.PollEvent()
-		return nil
+	updateGuess := func() {
+		candidates, err := getFilesForPrefix(string(openBuffer))
+		if err != nil || len(candidates) == 0 {
+			bestGuess = ""
+			return
+		}
+		bestGuess = candidates[0]
 	}
 
 	for {
@@ -161,7 +158,6 @@ func (e *EditorCore) cmdOpen(*EditorCore, []string) error {
 				if filename != "" {
 					newTEXTBUFFER, err := e.OpenFile(filename)
 					if err != nil {
-						// Show error but continue with current buffer
 						e.PrintMessageStyle(0, e.Rows, e.Styles.Error, "Error opening file")
 						e.Terminal.Show()
 						e.Terminal.PollEvent()
@@ -172,24 +168,21 @@ func (e *EditorCore) cmdOpen(*EditorCore, []string) error {
 					e.Terminal.Clear()
 					return nil
 				}
-				break
 			} else if ev.Key() == tcell.KeyBackspace || ev.Key() == tcell.KeyBackspace2 {
 				if len(openBuffer) > 0 {
 					openBuffer = openBuffer[:len(openBuffer)-1]
 				}
+				updateGuess()
 			} else if ev.Key() == tcell.KeyEscape {
 				return nil
-
 			} else if ev.Key() == tcell.KeyTAB {
-				openBuffer = []rune(bestGuess)
+				if bestGuess != "" {
+					openBuffer = []rune(bestGuess)
+					updateGuess()
+				}
 			} else if ev.Rune() != 0 {
 				openBuffer = append(openBuffer, ev.Rune())
-				//Find new best guess from current input
-				for _, e := range currentDirFiles {
-					if strings.HasPrefix(e, string(openBuffer)) {
-						bestGuess = e
-					}
-				}
+				updateGuess()
 			}
 		}
 	}
