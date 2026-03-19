@@ -153,10 +153,18 @@ func (e *EditorCore) SetStatusMessage(msg string) {
 	e.statusMessageTime = time.Now()
 }
 
-func (e *EditorCore) Run() {
+func (e *EditorCore) Run(fileToOpen string) {
 	// Load plugins before starting
 	if err := e.LoadPluginsFromDirectory("./modules"); err != nil {
 		fmt.Printf("Warning: %v\n", err)
+	}
+	if fileToOpen != "" {
+		newTextBuffer, err := e.OpenFile(fileToOpen)
+		if err != nil {
+			e.mainLoop()
+		}
+		e.TextBuffer = newTextBuffer
+		e.SourceFile = fileToOpen
 	}
 
 	e.mainLoop()
