@@ -24,23 +24,77 @@ func (e *EditorCore) PrintMessageStyle(col, row int, style tcell.Style, msg stri
 	}
 }
 
-func (e *EditorCore) DisplayBuffer() {
-	var row, col int
+// cursorScreenX returns the screen X position of the cursor, accounting for tabs.
+func (e *EditorCore) cursorScreenX() int {
+	bufRow := e.CursorY + e.OffsetY
+	bufCol := e.CursorX - e.LineCountWidth + e.OffsetX
+	scrollVisual := e.bufferToVisual(bufRow, e.OffsetX)
+	cursorVisual := e.bufferToVisual(bufRow, bufCol)
+	return cursorVisual - scrollVisual + e.LineCountWidth
+}
 
-	for row = 0; row <= e.Rows; row++ {
+// bufferToVisual returns the visual column for a given buffer column on a row,
+// accounting for tab expansion. bufCol is a buffer index (not screen position).
+func (e *EditorCore) bufferToVisual(bufRow, bufCol int) int {
+	if bufRow < 0 || bufRow >= len(e.TextBuffer) {
+		return bufCol
+	}
+	visual := 0
+	for i, ch := range e.TextBuffer[bufRow] {
+		if i >= bufCol {
+			break
+		}
+		if ch == '\t' {
+			visual += e.TabSize - (visual % e.TabSize)
+		} else {
+			visual += runewidth.RuneWidth(ch)
+		}
+	}
+	return visual
+}
+
+func (e *EditorCore) DisplayBuffer() {
+	for row := 0; row <= e.Rows; row++ {
 		textBufferRow := row + e.OffsetY
 
 		e.DisplayLineNumber(row, textBufferRow)
 
-		for col = 0; col < e.Cols; col++ {
-			textBufferCol := col + e.OffsetX
+		if textBufferRow < 0 || textBufferRow >= len(e.TextBuffer) {
+			continue
+		}
 
-			if textBufferRow >= 0 &&
-				textBufferRow < len(e.TextBuffer) &&
-				textBufferCol < len(e.TextBuffer[textBufferRow]) {
-				e.Terminal.SetContent(col+e.LineCountWidth, row,
-					e.TextBuffer[textBufferRow][textBufferCol],
-					nil, e.Styles.Main)
+		line := e.TextBuffer[textBufferRow]
+		// OffsetX is a buffer index — compute its visual column as the scroll origin.
+		scrollVisual := e.bufferToVisual(textBufferRow, e.OffsetX)
+
+		for bufCol := e.OffsetX; bufCol < len(line); bufCol++ {
+			ch := line[bufCol]
+			absVisual := e.bufferToVisual(textBufferRow, bufCol)
+			screenCol := absVisual - scrollVisual
+
+			var cellWidth int
+			if ch == '\t' {
+				cellWidth = e.TabSize - (absVisual % e.TabSize)
+			} else {
+				cellWidth = runewidth.RuneWidth(ch)
+			}
+
+			for i := 0; i < cellWidth; i++ {
+				sc := screenCol + i
+				if sc >= e.Cols {
+					break
+				}
+				var r rune
+				if ch == '\t' || i > 0 {
+					r = ' '
+				} else {
+					r = ch
+				}
+				e.Terminal.SetContent(sc+e.LineCountWidth, row, r, nil, e.Styles.Main)
+			}
+
+			if screenCol+cellWidth >= e.Cols {
+				break
 			}
 		}
 	}

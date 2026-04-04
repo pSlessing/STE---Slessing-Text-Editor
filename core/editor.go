@@ -34,6 +34,7 @@ type EditorCore struct {
 
 	//Constants, could maybe be moved into a settings/config file
 	MaxWidth int
+	TabSize  int
 
 	statusMessage     string
 	statusMessageTime time.Time
@@ -66,6 +67,7 @@ func NewEditor() (*EditorCore, error) {
 		},
 		SettingsLength:    10,
 		MaxWidth:          78,
+		TabSize:           4,
 		statusMessage:     "",
 		statusMessageTime: time.Now(),
 	}

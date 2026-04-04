@@ -6,7 +6,7 @@ func (e *EditorCore) loopWrite() {
 	e.Terminal.Clear()
 	e.DisplayBuffer()
 	e.DisplayStatus()
-	e.Terminal.ShowCursor(e.CursorX, e.CursorY)
+	e.Terminal.ShowCursor(e.cursorScreenX(), e.CursorY)
 	e.Terminal.Show()
 	for {
 		event := e.Terminal.PollEvent()
@@ -284,7 +284,7 @@ func (e *EditorCore) loopWrite() {
 			e.Terminal.Clear()
 			e.DisplayBuffer()
 			e.DisplayStatus()
-			e.Terminal.ShowCursor(e.CursorX, e.CursorY)
+			e.Terminal.ShowCursor(e.cursorScreenX(), e.CursorY)
 			e.Terminal.Show()
 		}
 	}
