@@ -22,32 +22,56 @@ func (g *GitPlugin) Commands() []core.Command {
 		{
 			Name:        "gitpull",
 			Aliases:     []string{"gpl"},
-			Description: "Pull from repo",
+			Description: "Pull from remote",
 			Execute:     g.PullCommand,
 		},
 		{
 			Name:        "gitstatus",
 			Aliases:     []string{"gs"},
-			Description: "View Git Status",
+			Description: "View git status",
 			Execute:     g.StatusCommand,
 		},
 		{
 			Name:        "gitpush",
 			Aliases:     []string{"gps"},
-			Description: "Pull from repo",
+			Description: "Push to remote",
 			Execute:     g.PushCommand,
 		},
 		{
 			Name:        "gitcommit",
 			Aliases:     []string{"gc"},
-			Description: "Pull from repo",
+			Description: "Commit with a message: gc <message>",
 			Execute:     g.CommitCommand,
 		},
 		{
 			Name:        "gitbranch",
 			Aliases:     []string{"gb"},
-			Description: "Switch the branch you're currently on",
+			Description: "List branches (no args), switch branch (gb <name>), or create (gb -b <name>)",
 			Execute:     g.ChangeBranchCommand,
+		},
+		{
+			Name:        "gitadd",
+			Aliases:     []string{"ga"},
+			Description: "Stage files: ga <file> or ga for all",
+			Execute:     g.AddCommand,
+		},
+		{
+			Name:        "gitlog",
+			Aliases:     []string{"gl"},
+			Description: "Show recent commits",
+			Execute:     g.LogCommand,
+		},
+		{
+			Name:        "gitstash",
+			Aliases:     []string{"gst"},
+			Description: "Stash current changes",
+			Execute:     g.StashCommand,
+		},
+		{
+			Name:        "gitstashpop",
+			Aliases:     []string{"gstp"},
+			Description: "Pop the latest stash",
+			Execute:     g.StashPopCommand,
 		},
 	}
 }
@@ -60,6 +84,15 @@ func (g *GitPlugin) Initialize(editorCore *core.EditorCore) error {
 	} else {
 		g.wd = g.core.SourceFile
 	}
+
+	// Populate branch name in status bar
+	cmd := exec.Command("git", "branch", "--show-current")
+	cmd.Dir = filepath.Dir(g.wd)
+	out, err := cmd.Output()
+	if err == nil {
+		g.core.CurrentBranch = strings.TrimSpace(string(out))
+	}
+
 	return nil
 }
 
@@ -72,7 +105,7 @@ func (g *GitPlugin) PullCommand(e *core.EditorCore, args []string) error {
 	cmd.Dir = filepath.Dir(g.wd)
 	out, err := cmd.CombinedOutput()
 
-	message := string(out)
+	message := strings.TrimSpace(string(out))
 	if err != nil {
 		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error,
 			"Git pull failed: "+message+" ("+err.Error()+")")
@@ -80,20 +113,20 @@ func (g *GitPlugin) PullCommand(e *core.EditorCore, args []string) error {
 		return nil
 	}
 
-	g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Message, message)
-	g.core.Terminal.Show()
+	g.core.SetStatusMessage(message)
 
-	// Reload the file after pull
-	openedTextBuffer, err := g.core.OpenFile(g.core.SourceFile)
-	if err != nil {
-		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
+	if g.core.SourceFile != "" {
+		openedTextBuffer, err := g.core.OpenFile(g.core.SourceFile)
+		if err != nil {
+			g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
+			g.core.Terminal.Show()
+			return nil
+		}
+		g.core.TextBuffer = openedTextBuffer
+		g.core.DisplayBuffer()
+		g.core.DisplayStatus()
 		g.core.Terminal.Show()
-		return nil
 	}
-	g.core.TextBuffer = openedTextBuffer
-	g.core.DisplayBuffer()
-	g.core.DisplayStatus()
-	g.core.Terminal.Show()
 	return nil
 }
 
@@ -111,14 +144,12 @@ func (g *GitPlugin) StatusCommand(e *core.EditorCore, args []string) error {
 }
 
 func (g *GitPlugin) CommitCommand(e *core.EditorCore, args []string) error {
-	commitMSG := ""
 	if len(args) == 0 {
-		commitMSG = "No message provided"
-		g.core.SetStatusMessage(commitMSG)
-	} else {
-		commitMSG = strings.Join(args, " ")
+		g.core.SetStatusMessage("gitcommit requires a message: gc <message>")
+		return nil
 	}
 
+	commitMSG := strings.Join(args, " ")
 	cmd := exec.Command("git", "commit", "-a", "-m", commitMSG)
 	cmd.Dir = filepath.Dir(g.wd)
 	out, err := cmd.CombinedOutput()
@@ -127,7 +158,7 @@ func (g *GitPlugin) CommitCommand(e *core.EditorCore, args []string) error {
 		g.core.Terminal.Show()
 		return nil
 	}
-	g.core.SetStatusMessage(string(out))
+	g.core.SetStatusMessage(strings.TrimSpace(string(out)))
 	return nil
 }
 
@@ -140,12 +171,116 @@ func (g *GitPlugin) PushCommand(e *core.EditorCore, args []string) error {
 		g.core.Terminal.Show()
 		return nil
 	}
-	g.core.SetStatusMessage("result" + string(out))
+	g.core.SetStatusMessage(strings.TrimSpace(string(out)))
 	return nil
 }
 
 func (g *GitPlugin) ChangeBranchCommand(e *core.EditorCore, args []string) error {
-	g.core.SetStatusMessage("Git branch command was ran")
+	// No args: list branches as overlay
+	if len(args) == 0 {
+		cmd := exec.Command("git", "branch")
+		cmd.Dir = filepath.Dir(g.wd)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
+			g.core.Terminal.Show()
+			return nil
+		}
+		g.core.SetStatusMessage(string(out))
+		return nil
+	}
+
+	// -b <name>: create and switch to new branch
+	if args[0] == "-b" {
+		if len(args) < 2 {
+			g.core.SetStatusMessage("Usage: gb -b <branch-name>")
+			return nil
+		}
+		cmd := exec.Command("git", "checkout", "-b", args[1])
+		cmd.Dir = filepath.Dir(g.wd)
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			g.core.SetStatusMessage(string(out))
+			g.core.Terminal.Show()
+			return nil
+		}
+		g.core.CurrentBranch = args[1]
+		g.core.SetStatusMessage(strings.TrimSpace(string(out)))
+		return nil
+	}
+
+	// <name>: switch branch
+	cmd := exec.Command("git", "checkout", args[0])
+	cmd.Dir = filepath.Dir(g.wd)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
+		g.core.Terminal.Show()
+		return nil
+	}
+	g.core.CurrentBranch = args[0]
+	g.core.SetStatusMessage(strings.TrimSpace(string(out)))
+	return nil
+}
+
+func (g *GitPlugin) AddCommand(e *core.EditorCore, args []string) error {
+	target := "."
+	if len(args) > 0 {
+		target = args[0]
+	}
+	cmd := exec.Command("git", "add", target)
+	cmd.Dir = filepath.Dir(g.wd)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
+		g.core.Terminal.Show()
+		return nil
+	}
+	msg := strings.TrimSpace(string(out))
+	if msg == "" {
+		msg = "Staged: " + target
+	}
+	g.core.SetStatusMessage(msg)
+	return nil
+}
+
+func (g *GitPlugin) LogCommand(e *core.EditorCore, args []string) error {
+	cmd := exec.Command("git", "log", "--oneline", "-20")
+	cmd.Dir = filepath.Dir(g.wd)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
+		g.core.Terminal.Show()
+		return nil
+	}
+	g.core.SetStatusMessage(string(out))
+	g.core.Terminal.Show()
+	return nil
+}
+
+func (g *GitPlugin) StashCommand(e *core.EditorCore, args []string) error {
+	cmd := exec.Command("git", "stash")
+	cmd.Dir = filepath.Dir(g.wd)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
+		g.core.Terminal.Show()
+		return nil
+	}
+	g.core.SetStatusMessage(strings.TrimSpace(string(out)))
+	return nil
+}
+
+func (g *GitPlugin) StashPopCommand(e *core.EditorCore, args []string) error {
+	cmd := exec.Command("git", "stash", "pop")
+	cmd.Dir = filepath.Dir(g.wd)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		g.core.PrintMessageStyle(g.core.Cols/2, g.core.Rows/2, g.core.Styles.Error, err.Error())
+		g.core.Terminal.Show()
+		return nil
+	}
+	g.core.SetStatusMessage(strings.TrimSpace(string(out)))
 	return nil
 }
 

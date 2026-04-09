@@ -29,7 +29,9 @@ type EditorCore struct {
 	commands map[string]Command
 
 	// Other state
-	InputBuffer    []rune
+	InputBuffer   []rune
+	CurrentBranch string
+
 	LineCountWidth int
 
 	//Constants, could maybe be moved into a settings/config file

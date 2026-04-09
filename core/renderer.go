@@ -2,6 +2,7 @@ package core
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -151,9 +152,26 @@ func (e *EditorCore) DisplayStatus() {
 	e.PrintMessageStyle(e.Cols-8, e.Rows+1, e.Styles.Status, lineNumberStr)
 	e.PrintMessageStyle(e.Cols-12, e.Rows+1, e.Styles.Status, "row")
 
+	if e.CurrentBranch != "" {
+		branchDisplay := "[" + e.CurrentBranch + "]"
+		e.PrintMessageStyle(e.Cols-14-len(branchDisplay), e.Rows+1, e.Styles.Status, branchDisplay)
+	}
+
 	if time.Since(e.statusMessageTime) < 3*time.Second {
-		// Display e.statusMessage in status bar or separate line
-		e.PrintMessageStyle(e.Cols-len(e.statusMessage), 0, e.Styles.Status, e.statusMessage)
+		lines := strings.Split(e.statusMessage, "\n")
+		maxLen := 0
+		for _, l := range lines {
+			if len(l) > maxLen {
+				maxLen = len(l)
+			}
+		}
+		startCol := e.Cols - maxLen
+		for row, l := range lines {
+			for col := startCol; col <= e.Cols; col++ {
+				e.Terminal.SetContent(col, row, ' ', nil, e.Styles.Status)
+			}
+			e.PrintMessageStyle(startCol, row, e.Styles.Status, l)
+		}
 	} else {
 		e.statusMessage = ""
 	}
