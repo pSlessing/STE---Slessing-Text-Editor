@@ -157,7 +157,7 @@ func (e *EditorCore) DisplayStatus() {
 		e.PrintMessageStyle(e.Cols-14-len(branchDisplay), e.Rows+1, e.Styles.Status, branchDisplay)
 	}
 
-	if time.Since(e.statusMessageTime) < 3*time.Second {
+	if e.statusMessage != "" && time.Since(e.statusMessageTime) < 3*time.Second {
 		lines := strings.Split(e.statusMessage, "\n")
 		maxLen := 0
 		for _, l := range lines {

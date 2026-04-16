@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -208,8 +209,15 @@ func (e *EditorCore) cmdOpen(*EditorCore, []string) error {
 	}
 }
 
-func (*EditorCore) cmdPlugins(*EditorCore, []string) error {
-	//TODO: Insert some form of plugin listing here
+func (e *EditorCore) cmdPlugins(*EditorCore, []string) error {
+	stringToPrint := ""
+
+	for _, v := range e.plugins {
+		stringToPrint += (v.Name() + "\n")
+	}
+	stringToPrint = strings.TrimRight(stringToPrint, "\n")
+	e.SetStatusMessage(stringToPrint)
+
 	return nil
 }
 
