@@ -142,6 +142,12 @@ func (e *EditorCore) registerBuiltInCommands() {
 			Description: "List the current plugins",
 			Execute:     e.cmdPlugins,
 		},
+		{
+			Name:        "Command",
+			Aliases:     []string{"cmd"},
+			Description: "Execute a command in the current working directory",
+			Execute:     e.cmdCommand,
+		},
 	}
 
 	for _, cmd := range builtins {

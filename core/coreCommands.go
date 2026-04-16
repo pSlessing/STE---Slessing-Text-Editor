@@ -3,10 +3,22 @@ package core
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/gdamore/tcell/v2"
 )
+
+func (e *EditorCore) cmdCommand(_ *EditorCore, arg []string) error {
+	cmd := exec.Command(arg[0], arg[1:]...)
+	if cmd.Err != nil {
+		e.PrintMessageStyle(e.Cols/2, e.Rows/2, e.Styles.Error, cmd.Err.Error())
+		return nil
+	}
+	outputString, _ := cmd.Output()
+	e.SetStatusMessage(string(outputString))
+	return nil
+}
 
 func (e *EditorCore) cmdQuit(*EditorCore, []string) error {
 	e.Terminal.Fini()
