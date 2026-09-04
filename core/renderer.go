@@ -9,15 +9,6 @@ import (
 	"github.com/mattn/go-runewidth"
 )
 
-// PrintMessage #TODO: should this be able to use any, or standard colors every time?
-func (e *EditorCore) PrintMessage(col, row int, fg, bg tcell.Color, msg string) {
-	for _, c := range msg {
-		currStyle := tcell.StyleDefault.Foreground(fg).Background(bg)
-		e.Terminal.SetContent(col, row, c, nil, currStyle)
-		col += runewidth.RuneWidth(c)
-	}
-}
-
 func (e *EditorCore) PrintMessageStyle(col, row int, style tcell.Style, msg string) {
 	for _, c := range msg {
 		e.Terminal.SetContent(col, row, c, nil, style)

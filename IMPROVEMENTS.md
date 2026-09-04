@@ -21,5 +21,5 @@ Reviewed: `main.go`, `core/*.go`, `modules/gitPlugin.go`, `Makefile`, `install.s
 ## Minor / cosmetic
 
 - `readme.md`'s feature bullet formatting merges two unrelated bullets onto one line: `"Customizability" ... - Fuzzy file search within current directory` (`readme.md:12`) reads as if fuzzy search is a sub-point of customizability rather than its own feature.
-- `core/renderer.go:12`: `// PrintMessage #TODO: should this be able to use any, or standard colors every time?` — open design question left in a comment; `PrintMessageStyle` (added later, taking a `tcell.Style`) appears to already be the intended answer, since most call sites use it over `PrintMessage`. Consider deprecating/removing `PrintMessage` in favor of `PrintMessageStyle` for consistency.
+
 - Naming inconsistency: `cmdCommand`'s registered `Name` is `"Command"` (capitalized) while every other built-in command name is lowercase (`core/editor.go:146`) — `ExecuteCommand` lowercases user input before lookup (`strings.ToLower(parts[0])`, `core/editor.go:210`), so the capitalized primary name is effectively unreachable by typing `command`; only the `cmd` alias works. Should be `"command"` for consistency and so `help` lists something typeable.
