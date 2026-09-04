@@ -1,9 +1,9 @@
 package core
 
 import (
-	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -183,10 +183,25 @@ func (e *EditorCore) SetStatusMessage(msg string) {
 	e.statusMessageTime = time.Now()
 }
 
+// pluginDirectory returns the directory plugins are loaded from: a
+// "modules" folder next to the running executable. Resolving it against
+// the executable path (rather than the current working directory) means
+// plugins are found the same way whether ste is launched from the repo
+// during development or from an install like /usr/local/bin/ste.
+func (e *EditorCore) pluginDirectory() string {
+	exePath, err := os.Executable()
+	if err != nil {
+		return "./modules"
+	}
+	return filepath.Join(filepath.Dir(exePath), "modules")
+}
+
 func (e *EditorCore) Run(fileToOpen string) {
-	// Load plugins before starting
-	if err := e.LoadPluginsFromDirectory("./modules"); err != nil {
-		fmt.Printf("Warning: %v\n", err)
+	// Load plugins before starting. The terminal is already in raw/alt-screen
+	// mode at this point, so any diagnostics go through SetStatusMessage
+	// instead of stdout.
+	if err := e.LoadPluginsFromDirectory(e.pluginDirectory()); err != nil {
+		e.SetStatusMessage("Warning: " + err.Error())
 	}
 	if fileToOpen != "" {
 		newTextBuffer, _ := e.OpenFile(fileToOpen)

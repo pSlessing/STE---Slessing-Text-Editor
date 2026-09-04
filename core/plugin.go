@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"plugin"
+	"strings"
 )
 
 // Plugin interface that all plugins must implement
@@ -23,7 +24,10 @@ type Command struct {
 	Execute     func(*EditorCore, []string) error
 }
 
-// LoadPluginsFromDirectory automatically discovers and loads all .so plugins
+// LoadPluginsFromDirectory automatically discovers and loads all .so plugins.
+// The terminal is already in raw/alt-screen mode by the time this runs, so
+// diagnostics are surfaced via the status message rather than printed to
+// stdout (which would corrupt the display instead of being seen).
 func (e *EditorCore) LoadPluginsFromDirectory(dir string) error {
 	// Find all .so files
 	pattern := filepath.Join(dir, "*.so")
@@ -32,15 +36,22 @@ func (e *EditorCore) LoadPluginsFromDirectory(dir string) error {
 		return fmt.Errorf("failed to scan plugin directory: %w", err)
 	}
 
-	fmt.Printf("Found %d plugins in %s\n", len(plugins), dir)
+	loaded := 0
+	var warnings []string
 
 	// Load each plugin
 	for _, pluginPath := range plugins {
 		if err := e.loadPlugin(pluginPath); err != nil {
 			// Don't fail completely if one plugin fails
-			fmt.Printf("Warning: Failed to load plugin %s: %v\n", pluginPath, err)
+			warnings = append(warnings, fmt.Sprintf("Failed to load plugin %s: %v", filepath.Base(pluginPath), err))
 			continue
 		}
+		loaded++
+	}
+
+	if len(plugins) > 0 {
+		messages := append([]string{fmt.Sprintf("Loaded %d/%d plugins", loaded, len(plugins))}, warnings...)
+		e.SetStatusMessage(strings.Join(messages, "\n"))
 	}
 
 	return nil
@@ -92,11 +103,8 @@ func (e *EditorCore) RegisterPlugin(p Plugin) error {
 		for _, alias := range cmd.Aliases {
 			e.commands[alias] = cmd
 		}
-
-		fmt.Printf("Registered command: %s (plugin: %s)\n", cmd.Name, p.Name())
 	}
 
-	fmt.Printf("Successfully loaded plugin: %s\n", p.Name())
 	return nil
 }
 
