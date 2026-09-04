@@ -3,11 +3,6 @@
 Reviewed: `main.go`, `core/*.go`, `modules/gitPlugin.go`, `Makefile`, `install.sh`, `go.mod`, `readme.md`.
 `go vet ./...`-equivalent passes clean and both the main binary and the git plugin build successfully; the issues below are logic, robustness, and maintainability findings found by reading the code, not compiler errors.
 
-## Broken / incomplete features
-
-- **Plugin directory is resolved relative to CWD** — `Run()` calls `e.LoadPluginsFromDirectory("./modules")` (`core/editor.go:168`). This only works when `ste` is launched from inside the repo. Per the README, the intended install path is `sudo cp ste /usr/local/bin/`; once installed system-wide, `./modules` won't exist relative to wherever the user launches `ste` from, so the git plugin (and any future plugin) silently never loads. Plugin directory should be resolved relative to the executable path (`os.Executable()`) or a fixed config location (e.g. `~/.config/SlessingTextEditor/plugins`), matching the pattern already used for settings in `visuals.go`.
-- **Plugin-load diagnostics print to stdout after the terminal is already in raw/alt-screen mode** — `NewEditor()` calls `terminal.Init()` (`core/editor.go:51`) before `Run()` calls `LoadPluginsFromDirectory`, which does `fmt.Printf(...)` for every plugin found/loaded/failed (`core/plugin.go:35,41,96,99`). Those writes land on the already-active alternate screen and will corrupt the display or simply never be seen instead of being shown to the user.
-
 ## Duplication / maintainability
 
 - **`cmdSave`, `cmdSaveAs`, and `cmdOpen` are ~90% copy-pasted** (`core/coreCommands.go:44-222`) — same event loop, same backspace/escape handling, nearly identical rendering. `cmdSave` alone is missing the tab-complete/best-guess behavior the other two have. This should be one parameterized "prompt for filename" helper (prompt text, tab-complete on/off, and a callback for what to do with the result).
@@ -23,8 +18,7 @@ Reviewed: `main.go`, `core/*.go`, `modules/gitPlugin.go`, `Makefile`, `install.s
 - **`getCurrentColorPos`** falls back to index `0` ("Black") when the current color isn't found in `colorNames` (`core/visuals.go:242-243`), silently misreporting the selection rather than surfacing that the stored color is out of the known palette (can happen since `tcell.Color` supports arbitrary RGB values but the settings UI only offers 21 named colors).
 - **`cmdCommand`'s output/error handling is weak** (`core/coreCommands.go:12-21`) — `cmd.Output()`'s error return is discarded (`outputString, _ := cmd.Output()`), so a failing external command shows an empty status message instead of the error/stderr. `cmd.Output()` only captures stdout; combining stdout+stderr (as the git plugin correctly does with `CombinedOutput()`) would be more useful for a general "run a command" feature.
 - **No confirmation/sandboxing around `cmd`/`Command`** — it runs arbitrary shell commands with the editor's own privileges. That's a reasonable "power user" feature (similar to Vim's `:!`), but combined with the no-args panic above and no display of stderr, it's currently more likely to crash or confuse than help. At minimum, guard against empty args and echo failures.
-- **`insertRune`'s bounds-check failure path** (`core/write.go:333-340`) prints `"INSERT WAS NOT INBOUND"` at (0,0) and returns, but that message is overwritten on the very next redraw and there's a stray commented-out `//termbox.PollEvent()` (leftover from a prior termbox→tcell migration) suggesting this was meant to pause so the message is actually readable. In practice this means cursor/offset desync bugs fail silently.
-- **Leftover `termbox` reference** — `core/write.go:283`: `//TODO:termbox.SetCursor(e.CursorX, e.CursorY)` — dead comment from before the migration to `tcell`; the actual cursor placement now happens via `e.Terminal.ShowCursor(...)` a few lines later, so this TODO is stale and should just be deleted.
+
 
 ## Testing / process
 

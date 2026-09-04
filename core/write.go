@@ -343,7 +343,6 @@ func (e *EditorCore) insertRune(insertrune rune) {
 		CursorPosXinBuffer < 0 ||
 		CursorPosXinBuffer > len(e.TextBuffer[CursorPosYinBuffer]) {
 		e.PrintMessageStyle(0, 0, e.Styles.Error, "INSERT WAS NOT INBOUND")
-		//termbox.PollEvent()
 		return
 	}
 

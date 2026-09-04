@@ -10,7 +10,6 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-// Settings represents the configuration structure for termbox colors
 type Settings struct {
 	BGColor          tcell.Color `json:"bg_color"`
 	FGColor          tcell.Color `json:"fg_color"`
