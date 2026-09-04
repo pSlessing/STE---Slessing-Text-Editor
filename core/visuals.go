@@ -201,37 +201,45 @@ func main() {
 }
 */
 
+// colorSetting points at one foreground/background slot of a StyleSet style,
+// so the settings loop can index into it instead of switching on position.
+type colorSetting struct {
+	style        *tcell.Style
+	isBackground bool
+}
+
+// colorSettingsTable is the single source of truth for what "setting N"
+// means: its order defines SettingsLength and is shared by every position ->
+// style lookup (getCurrentColorPos, updateStylesHelper).
+func (e *EditorCore) colorSettingsTable() []colorSetting {
+	return []colorSetting{
+		{&e.Styles.Main, false},
+		{&e.Styles.Main, true},
+		{&e.Styles.Status, false},
+		{&e.Styles.Status, true},
+		{&e.Styles.Message, false},
+		{&e.Styles.Message, true},
+		{&e.Styles.Linecount, false},
+		{&e.Styles.Linecount, true},
+		{&e.Styles.Error, false},
+		{&e.Styles.Error, true},
+	}
+}
+
 // Helper function to get the current color position based on the selected setting
 func (e *EditorCore) getCurrentColorPos(currentPos int, colorNames []string) int {
-	//Please let me reflect the number of fields in here
-	if currentPos >= 10 {
+	settings := e.colorSettingsTable()
+	if currentPos < 0 || currentPos >= len(settings) {
 		return 0
 	}
-	var currentColor tcell.Color
-	switch currentPos {
-	case 0:
-		currentColor, _, _ = e.Styles.Main.Decompose()
-	case 1:
-		_, currentColor, _ = e.Styles.Main.Decompose()
-	case 2:
-		currentColor, _, _ = e.Styles.Status.Decompose()
-	case 3:
-		_, currentColor, _ = e.Styles.Status.Decompose()
-	case 4:
-		currentColor, _, _ = e.Styles.Message.Decompose()
-	case 5:
-		_, currentColor, _ = e.Styles.Message.Decompose()
-	case 6:
-		currentColor, _, _ = e.Styles.Linecount.Decompose()
-	case 7:
-		_, currentColor, _ = e.Styles.Linecount.Decompose()
-	case 8:
-		currentColor, _, _ = e.Styles.Error.Decompose()
-	case 9:
-		_, currentColor, _ = e.Styles.Error.Decompose()
+
+	setting := settings[currentPos]
+	fg, bg, _ := setting.style.Decompose()
+	currentColor := fg
+	if setting.isBackground {
+		currentColor = bg
 	}
 
-	// What the fuck is this shit use a god damn map
 	for i, colorName := range colorNames {
 		if e.getColorFromName(colorName) == currentColor {
 			return i
@@ -275,27 +283,16 @@ func (e *EditorCore) getColorFromName(colorName string) tcell.Color {
 }
 
 func (e *EditorCore) updateStylesHelper(currentPos int, selectedColor tcell.Color) {
-	switch currentPos {
-	case 0:
-		e.Styles.Main = e.Styles.Main.Foreground(selectedColor)
-	case 1:
-		e.Styles.Main = e.Styles.Main.Background(selectedColor)
-	case 2:
-		e.Styles.Status = e.Styles.Status.Foreground(selectedColor)
-	case 3:
-		e.Styles.Status = e.Styles.Status.Background(selectedColor)
-	case 4:
-		e.Styles.Message = e.Styles.Message.Foreground(selectedColor)
-	case 5:
-		e.Styles.Message = e.Styles.Message.Background(selectedColor)
-	case 6:
-		e.Styles.Linecount = e.Styles.Linecount.Foreground(selectedColor)
-	case 7:
-		e.Styles.Linecount = e.Styles.Linecount.Background(selectedColor)
-	case 8:
-		e.Styles.Error = e.Styles.Error.Foreground(selectedColor)
-	case 9:
-		e.Styles.Error = e.Styles.Error.Background(selectedColor)
+	settings := e.colorSettingsTable()
+	if currentPos < 0 || currentPos >= len(settings) {
+		return
+	}
+
+	setting := settings[currentPos]
+	if setting.isBackground {
+		*setting.style = setting.style.Background(selectedColor)
+	} else {
+		*setting.style = setting.style.Foreground(selectedColor)
 	}
 }
 

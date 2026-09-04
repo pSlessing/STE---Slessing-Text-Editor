@@ -71,12 +71,13 @@ func NewEditor() (*EditorCore, error) {
 			Linecount: tcell.StyleDefault.Foreground(tcell.ColorDarkCyan).Background(tcell.ColorWhite),
 			Error:     tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tcell.ColorRed),
 		},
-		SettingsLength:    10,
 		MaxWidth:          78,
 		TabSize:           4,
 		statusMessage:     "",
 		statusMessageTime: time.Now(),
 	}
+	editor.SettingsLength = len(editor.colorSettingsTable())
+
 	settings, err := LoadSettings()
 	if err != nil {
 		editor.PrintMessageStyle(editor.Cols/2, editor.Rows/2, editor.Styles.Error, "Error loading settings"+(err.Error()))
