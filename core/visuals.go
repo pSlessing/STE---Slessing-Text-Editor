@@ -246,8 +246,9 @@ func (e *EditorCore) getCurrentColorPos(currentPos int, colorNames []string) int
 		}
 	}
 
-	// If color not found in our list, return 0 (default to first color)
-	return 0
+	// The stored color isn't one of the named presets (e.g. an arbitrary RGB
+	// value) - signal "no match" instead of silently claiming it's colorNames[0].
+	return -1
 }
 
 // Helper function to convert color name to tcell.Color
@@ -356,10 +357,15 @@ func (e *EditorCore) loopChangeSettings() {
 				switch key {
 				case tcell.KeyEnter:
 					{
-						// Apply selected color to current style setting
+						// Apply selected color to current style setting.
+						// colorPos is -1 when the stored color didn't match any
+						// preset and hasn't been changed via Left/Right - leave
+						// it untouched instead of overwriting it with colorNames[0].
 						if currentPos < e.SettingsLength {
-							selectedColor := colors[colorNames[colorPos]]
-							e.updateStylesHelper(currentPos, selectedColor)
+							if colorPos >= 0 {
+								selectedColor := colors[colorNames[colorPos]]
+								e.updateStylesHelper(currentPos, selectedColor)
+							}
 							currentSettings := e.GetCurrentSettings()
 							err := SaveSettings(currentSettings)
 							if err != nil {

@@ -4,7 +4,6 @@ Reviewed: `main.go`, `core/*.go`, `modules/gitPlugin.go`, `Makefile`, `install.s
 `go vet ./...`-equivalent passes clean and both the main binary and the git plugin build successfully; the issues below are logic, robustness, and maintainability findings found by reading the code, not compiler errors.
 
 ## Robustness / correctness edge cases
-- **`getCurrentColorPos`** falls back to index `0` ("Black") when the current color isn't found in `colorNames` (`core/visuals.go:242-243`), silently misreporting the selection rather than surfacing that the stored color is out of the known palette (can happen since `tcell.Color` supports arbitrary RGB values but the settings UI only offers 21 named colors).
 - **`cmdCommand`'s output/error handling is weak** (`core/coreCommands.go:12-21`) — `cmd.Output()`'s error return is discarded (`outputString, _ := cmd.Output()`), so a failing external command shows an empty status message instead of the error/stderr. `cmd.Output()` only captures stdout; combining stdout+stderr (as the git plugin correctly does with `CombinedOutput()`) would be more useful for a general "run a command" feature.
 - **No confirmation/sandboxing around `cmd`/`Command`** — it runs arbitrary shell commands with the editor's own privileges. That's a reasonable "power user" feature (similar to Vim's `:!`), but combined with the no-args panic above and no display of stderr, it's currently more likely to crash or confuse than help. At minimum, guard against empty args and echo failures.
 
