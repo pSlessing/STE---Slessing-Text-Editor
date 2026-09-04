@@ -14,12 +14,17 @@ func (e *EditorCore) cmdCommand(_ *EditorCore, arg []string) error {
 		return fmt.Errorf("command requires an argument: cmd <command> [args...]")
 	}
 	cmd := exec.Command(arg[0], arg[1:]...)
-	if cmd.Err != nil {
-		e.PrintMessageStyle(e.Cols/2, e.Rows/2, e.Styles.Error, cmd.Err.Error())
+	out, err := cmd.CombinedOutput()
+
+	message := strings.TrimSpace(string(out))
+	if err != nil {
+		e.PrintMessageStyle(e.Cols/2, e.Rows/2, e.Styles.Error,
+			"Command failed: "+message+" ("+err.Error()+")")
+		e.Terminal.Show()
 		return nil
 	}
-	outputString, _ := cmd.Output()
-	e.SetStatusMessage(string(outputString))
+
+	e.SetStatusMessage(message)
 	return nil
 }
 
