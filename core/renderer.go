@@ -101,30 +101,6 @@ func (e *EditorCore) DisplayBuffer() {
 	}
 }
 
-// TODO: IMPLEMENT MESSAGES IN STATUS BAR OR SOMETHING ELSE
-
-/* type EditorCore struct {
-    // ... existing fields
-    statusMessage   string
-    statusMessageTime time.Time
-}
-
-func (e *EditorCore) SetStatusMessage(msg string) {
-    e.statusMessage = msg
-    e.statusMessageTime = time.Now()
-}
-
-func (e *EditorCore) DisplayStatus() {
-    // ... existing status display code
-
-    // Show message if it's recent (e.g., within 3 seconds)
-    if time.Since(e.statusMessageTime) < 3*time.Second {
-        // Display e.statusMessage in status bar or separate line
-    } else {
-        e.statusMessage = "" // Clear old message
-    }
-} */
-
 func (e *EditorCore) DisplayStatus() {
 	var col int
 
@@ -166,7 +142,18 @@ func (e *EditorCore) DisplayStatus() {
 			}
 		}
 		startCol := e.Cols - maxLen
-		for row, l := range lines {
+		if startCol < 0 {
+			startCol = 0
+		}
+		// Stack the message directly above the status bar (e.Rows+1) instead
+		// of at row 0, so it appears as an overlay near the status bar rather
+		// than overwriting the top of the buffer.
+		startRow := e.Rows + 1 - len(lines)
+		if startRow < 0 {
+			startRow = 0
+		}
+		for i, l := range lines {
+			row := startRow + i
 			for col := startCol; col <= e.Cols; col++ {
 				e.Terminal.SetContent(col, row, ' ', nil, e.Styles.Status)
 			}
