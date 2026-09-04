@@ -2,7 +2,10 @@ package core
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -84,7 +87,23 @@ func NewEditor() (*EditorCore, error) {
 	// Register built-in commands
 	editor.registerBuiltInCommands()
 
+	editor.handleTerminationSignals()
+
 	return editor, nil
+}
+
+// handleTerminationSignals ensures the terminal is restored to its normal
+// mode even if the process is killed (e.g. Ctrl+C) instead of exiting via
+// the quit command. Without this, an interrupted session leaves the
+// terminal stuck in raw/alternate-screen mode.
+func (e *EditorCore) handleTerminationSignals() {
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		<-sigCh
+		e.Terminal.Fini()
+		os.Exit(1)
+	}()
 }
 
 func (e *EditorCore) registerBuiltInCommands() {
@@ -180,21 +199,35 @@ func (e *EditorCore) Run(fileToOpen string) {
 
 func (e *EditorCore) mainLoop() {
 	e.CursorX = e.LineCountWidth
+
+	// Draw the initial state before waiting on the first input event —
+	// otherwise the screen stays blank until the user's first keypress.
+	e.updateDimensions()
+	e.render()
+
 	for {
-		e.Cols, e.Rows = e.Terminal.Size()
-		//Ive forgotten why this is 2, one for buffer, but why another?
-		//When 1, status bar is gone, so idk man
-		e.Rows -= 2
-		e.Cols -= e.LineCountWidth
-		if e.Cols < e.MaxWidth {
-			e.Cols = e.MaxWidth
-		}
-		e.Terminal.Clear()
+		e.updateDimensions()
 		e.inputHandling()
-		e.DisplayBuffer()
-		e.DisplayStatus()
-		e.Terminal.Show()
+		e.render()
 	}
+}
+
+func (e *EditorCore) updateDimensions() {
+	e.Cols, e.Rows = e.Terminal.Size()
+	//Ive forgotten why this is 2, one for buffer, but why another?
+	//When 1, status bar is gone, so idk man
+	e.Rows -= 2
+	e.Cols -= e.LineCountWidth
+	if e.Cols < e.MaxWidth {
+		e.Cols = e.MaxWidth
+	}
+}
+
+func (e *EditorCore) render() {
+	e.Terminal.Clear()
+	e.DisplayBuffer()
+	e.DisplayStatus()
+	e.Terminal.Show()
 }
 
 func (e *EditorCore) handleCommand() {
