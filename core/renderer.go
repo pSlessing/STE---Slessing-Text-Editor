@@ -108,8 +108,13 @@ func (e *EditorCore) DisplayStatus() {
 	e.Terminal.SetContent(1, e.Rows+1, '', nil, e.Styles.Status)
 	e.Terminal.SetContent(2, e.Rows+1, '❯', nil, e.Styles.Status)
 
+	// statusWidth is the full terminal width in columns; e.Cols excludes the
+	// line-count gutter, so the status bar (which spans the whole row) needs
+	// to add it back to find the true right edge.
+	statusWidth := e.Cols + e.LineCountWidth
+
 	BufferOffset := 3
-	for col = BufferOffset; col < e.Cols+e.LineCountWidth; col++ {
+	for col = BufferOffset; col < statusWidth; col++ {
 		e.Terminal.SetContent(col, e.Rows+1, ' ', nil, e.Styles.Status)
 		if col-BufferOffset < len(e.InputBuffer) {
 			e.Terminal.SetContent(col, e.Rows+1,
@@ -119,19 +124,22 @@ func (e *EditorCore) DisplayStatus() {
 	}
 
 	var currentLine = e.CursorY + e.OffsetY
-	var lineNumberStr = strconv.Itoa(currentLine + 1)
 	var currentColumn = e.CursorX + e.OffsetX - e.LineCountWidth
-	var columnNumberStr = strconv.Itoa(currentColumn + 1)
-	// #TODO do the offsets more neat
-	e.PrintMessageStyle(e.Cols, e.Rows+1, e.Styles.Status, columnNumberStr)
-	e.PrintMessageStyle(e.Cols-4, e.Rows+1, e.Styles.Status, "col")
-	e.PrintMessageStyle(e.Cols-8, e.Rows+1, e.Styles.Status, lineNumberStr)
-	e.PrintMessageStyle(e.Cols-12, e.Rows+1, e.Styles.Status, "row")
 
+	rightFields := []string{"row " + strconv.Itoa(currentLine+1), "col " + strconv.Itoa(currentColumn+1)}
 	if e.CurrentBranch != "" {
-		branchDisplay := "[" + e.CurrentBranch + "]"
-		e.PrintMessageStyle(e.Cols-14-len(branchDisplay), e.Rows+1, e.Styles.Status, branchDisplay)
+		rightFields = append([]string{"[" + e.CurrentBranch + "]"}, rightFields...)
 	}
+	rightText := strings.Join(rightFields, "  ")
+
+	// Right-align against the real edge of the status bar instead of
+	// hardcoded offsets, so the layout adapts to however wide the row/col
+	// numbers or branch name actually are, and to narrow terminals.
+	rightStart := statusWidth - len(rightText)
+	if rightStart < BufferOffset {
+		rightStart = BufferOffset
+	}
+	e.PrintMessageStyle(rightStart, e.Rows+1, e.Styles.Status, rightText)
 
 	if e.statusMessage != "" && time.Since(e.statusMessageTime) < 3*time.Second {
 		lines := strings.Split(e.statusMessage, "\n")
