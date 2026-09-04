@@ -230,9 +230,11 @@ func (e *EditorCore) mainLoop() {
 
 func (e *EditorCore) updateDimensions() {
 	e.Cols, e.Rows = e.Terminal.Size()
-	//Ive forgotten why this is 2, one for buffer, but why another?
-	//When 1, status bar is gone, so idk man
-	e.Rows -= 2
+	// e.Rows is an exclusive bound on buffer rows: the buffer occupies rows
+	// 0..e.Rows-1, and the status bar is drawn at row e.Rows (the one
+	// reserved row). Cursor clamping elsewhere already treats e.Rows this
+	// way; DisplayBuffer/DisplayStatus must use the same convention.
+	e.Rows -= 1
 	e.Cols -= e.LineCountWidth
 	if e.Cols < e.MaxWidth {
 		e.Cols = e.MaxWidth

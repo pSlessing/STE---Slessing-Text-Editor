@@ -55,7 +55,7 @@ func (e *EditorCore) bufferToVisual(bufRow, bufCol int) int {
 }
 
 func (e *EditorCore) DisplayBuffer() {
-	for row := 0; row <= e.Rows; row++ {
+	for row := 0; row < e.Rows; row++ {
 		textBufferRow := row + e.OffsetY
 
 		e.DisplayLineNumber(row, textBufferRow)
@@ -104,9 +104,9 @@ func (e *EditorCore) DisplayBuffer() {
 func (e *EditorCore) DisplayStatus() {
 	var col int
 
-	e.Terminal.SetContent(0, e.Rows+1, ' ', nil, e.Styles.Status)
-	e.Terminal.SetContent(1, e.Rows+1, '', nil, e.Styles.Status)
-	e.Terminal.SetContent(2, e.Rows+1, '❯', nil, e.Styles.Status)
+	e.Terminal.SetContent(0, e.Rows, ' ', nil, e.Styles.Status)
+	e.Terminal.SetContent(1, e.Rows, '', nil, e.Styles.Status)
+	e.Terminal.SetContent(2, e.Rows, '❯', nil, e.Styles.Status)
 
 	// statusWidth is the full terminal width in columns; e.Cols excludes the
 	// line-count gutter, so the status bar (which spans the whole row) needs
@@ -115,9 +115,9 @@ func (e *EditorCore) DisplayStatus() {
 
 	BufferOffset := 3
 	for col = BufferOffset; col < statusWidth; col++ {
-		e.Terminal.SetContent(col, e.Rows+1, ' ', nil, e.Styles.Status)
+		e.Terminal.SetContent(col, e.Rows, ' ', nil, e.Styles.Status)
 		if col-BufferOffset < len(e.InputBuffer) {
-			e.Terminal.SetContent(col, e.Rows+1,
+			e.Terminal.SetContent(col, e.Rows,
 				e.InputBuffer[col-BufferOffset],
 				nil, e.Styles.Status)
 		}
@@ -139,7 +139,7 @@ func (e *EditorCore) DisplayStatus() {
 	if rightStart < BufferOffset {
 		rightStart = BufferOffset
 	}
-	e.PrintMessageStyle(rightStart, e.Rows+1, e.Styles.Status, rightText)
+	e.PrintMessageStyle(rightStart, e.Rows, e.Styles.Status, rightText)
 
 	if e.statusMessage != "" && time.Since(e.statusMessageTime) < 3*time.Second {
 		lines := strings.Split(e.statusMessage, "\n")
@@ -153,10 +153,10 @@ func (e *EditorCore) DisplayStatus() {
 		if startCol < 0 {
 			startCol = 0
 		}
-		// Stack the message directly above the status bar (e.Rows+1) instead
+		// Stack the message directly above the status bar (row e.Rows) instead
 		// of at row 0, so it appears as an overlay near the status bar rather
 		// than overwriting the top of the buffer.
-		startRow := e.Rows + 1 - len(lines)
+		startRow := e.Rows - len(lines)
 		if startRow < 0 {
 			startRow = 0
 		}

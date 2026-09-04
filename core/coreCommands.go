@@ -100,7 +100,7 @@ func (e *EditorCore) promptForFilename(promptText string, tabComplete bool, onSu
 					return nil
 				}
 				if err := onSubmit(filename); err != nil {
-					e.PrintMessageStyle(0, e.Rows, e.Styles.Error, err.Error())
+					e.PrintMessageStyle(0, e.Rows-1, e.Styles.Error, err.Error())
 					e.Terminal.Show()
 					e.Terminal.PollEvent()
 				} else {
@@ -129,7 +129,7 @@ func (e *EditorCore) promptForFilename(promptText string, tabComplete bool, onSu
 func (e *EditorCore) cmdSave(*EditorCore, []string) error {
 	if e.SourceFile != "" {
 		if err := e.WriteBufferToFile(e.SourceFile); err != nil {
-			e.PrintMessageStyle(0, e.Rows, e.Styles.Error,
+			e.PrintMessageStyle(0, e.Rows-1, e.Styles.Error,
 				fmt.Sprintf("Error saving file: %s", err.Error()))
 			e.Terminal.Show()
 			e.Terminal.PollEvent()

@@ -2,9 +2,6 @@
 
 Reviewed: `main.go`, `core/*.go`, `modules/gitPlugin.go`, `Makefile`, `install.sh`, `go.mod`, `readme.md`.
 `go vet ./...`-equivalent passes clean and both the main binary and the git plugin build successfully; the issues below are logic, robustness, and maintainability findings found by reading the code, not compiler errors.
-- **Magic-number layout in `DisplayStatus`** — `core/renderer.go:150-157` positions row/col/branch text using hardcoded offsets (`e.Cols-4`, `-8`, `-12`, `-14`) from the right edge with a `#TODO do the offsets more neat` comment acknowledging it. Breaks/overlaps on narrow terminals (nothing clamps against `e.Cols < e.MaxWidth` producing negative columns for very small windows... `MaxWidth` clamp only affects the buffer width, not this status line math).
-- **`core/editor.go:187-189`**: `e.Rows -= 2` has a comment reading *"Ive forgotten why this is 2, ... When 1, status bar is gone, so idk man"* — an unexplained magic number the original author admits not understanding. Worth root-causing and documenting properly (likely: one row for the status bar, one because `Rows` from `Terminal.Size()` is a count but row indices are 0-based and code compares with `<` in a couple of places and `<=` in others — see next point).
-- **Off-by-one inconsistency between loop bounds** — `DisplayBuffer` iterates `for row := 0; row <= e.Rows; row++` (`core/renderer.go:58`, inclusive), while cursor-clamping code elsewhere treats `e.Rows` as an exclusive bound (`if e.CursorY >= e.Rows { e.CursorY = e.Rows - 1 }`, `core/write.go:271-273`). Mixing inclusive/exclusive use of the same field is a likely source of the off-by-one row uncertainty called out in the comment above.
 
 ## Robustness / correctness edge cases
 

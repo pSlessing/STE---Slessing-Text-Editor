@@ -50,7 +50,7 @@ func (e *EditorCore) SaveCurrentState() (string, error) {
 		err := e.WriteBufferToFile(e.SourceFile)
 		if err != nil {
 			// Display error message to user
-			e.PrintMessage(0, e.Rows, tcell.ColorRed, tcell.ColorDefault,
+			e.PrintMessage(0, e.Rows-1, tcell.ColorRed, tcell.ColorDefault,
 				fmt.Sprintf("Error saving file: %s", err.Error()))
 			e.Terminal.Show()
 			e.Terminal.PollEvent()
