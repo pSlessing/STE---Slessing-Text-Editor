@@ -18,52 +18,13 @@ func (e *EditorCore) loopWrite() {
 			if mod == tcell.ModNone {
 				switch key {
 				case tcell.KeyUp:
-					if e.CursorY > 0 {
-						// Move cursor up within visible area
-						e.CursorY--
-					} else if e.OffsetY > 0 {
-						// Scroll up when cursor is at top
-						e.OffsetY--
-					}
-					// Adjust cursor X if moving to a shorter line
-					if e.CursorY+e.OffsetY < len(e.TextBuffer) && e.CursorX-e.LineCountWidth > len(e.TextBuffer[e.CursorY+e.OffsetY]) {
-						e.CursorX = len(e.TextBuffer[e.CursorY+e.OffsetY]) + e.LineCountWidth
-					}
+					e.moveCursorUp()
 				case tcell.KeyDown:
-					if e.CursorY < e.Rows-1 && e.CursorY+e.OffsetY+1 < len(e.TextBuffer) {
-						// Move cursor down within visible area
-						e.CursorY++
-					} else if e.OffsetY+e.Rows < len(e.TextBuffer) {
-						// Scroll down when cursor is at bottom
-						e.OffsetY++
-					}
-					// Adjust cursor X if moving to a shorter line
-					if e.CursorY+e.OffsetY < len(e.TextBuffer) && e.CursorX-e.LineCountWidth > len(e.TextBuffer[e.CursorY+e.OffsetY]) {
-						e.CursorX = len(e.TextBuffer[e.CursorY+e.OffsetY]) + e.LineCountWidth
-					}
+					e.moveCursorDown()
 				case tcell.KeyLeft:
-					if e.CursorX > e.LineCountWidth {
-						e.CursorX--
-						// Horizontal scroll left if needed
-						if e.CursorX < e.LineCountWidth {
-							e.CursorX = e.LineCountWidth
-						}
-					} else if e.OffsetX > 0 {
-						e.OffsetX--
-					}
+					e.moveCursorLeft()
 				case tcell.KeyRight:
-					if e.CursorY+e.OffsetY < len(e.TextBuffer) {
-						// Only allow moving right if not past end of line
-						lineLen := len(e.TextBuffer[e.CursorY+e.OffsetY])
-						if e.CursorX-e.LineCountWidth+e.OffsetX < lineLen {
-							e.CursorX++
-							// Horizontal scroll right if needed
-							if e.CursorX >= e.Cols+e.LineCountWidth {
-								e.OffsetX++
-								e.CursorX = e.Cols + e.LineCountWidth - 1
-							}
-						}
-					}
+					e.moveCursorRight()
 				case tcell.KeyBackspace, tcell.KeyBackspace2:
 					// If at the left edge and more to the left, scroll left before deleting
 					if e.CursorX == e.LineCountWidth && e.OffsetX > 0 {
@@ -127,97 +88,13 @@ func (e *EditorCore) loopWrite() {
 			} else if mod == tcell.ModCtrl {
 				switch key {
 				case tcell.KeyLeft:
-					if e.CursorX-e.LineCountWidth+e.OffsetX > 0 {
-						currChar := 'a'
-						// While loop here
-						for currChar != ' ' {
-							e.CursorX--
-							// Horizontal scroll LEFT if needed (fixed condition)
-							if e.CursorX < 0 {
-								e.OffsetX--
-								e.CursorX = 0
-							}
-							// Check bounds before accessing array
-							currentPos := e.CursorX - e.LineCountWidth + e.OffsetX
-							if currentPos == 0 {
-								currChar = ' '
-								break
-							}
-							currChar = e.TextBuffer[e.CursorY+e.OffsetY][currentPos]
-						}
-					}
+					e.moveCursorWordLeft()
 				case tcell.KeyRight:
-					if e.CursorY+e.OffsetY < len(e.TextBuffer) {
-						// Only allow moving right if not past end of line
-						lineLen := len(e.TextBuffer[e.CursorY+e.OffsetY])
-						if e.CursorX-e.LineCountWidth+e.OffsetX < lineLen {
-							currChar := 'a'
-							// While loop here
-							for currChar != ' ' {
-								e.CursorX++
-								// Horizontal scroll right if needed
-								if e.CursorX >= e.Cols-e.LineCountWidth {
-									e.OffsetX++
-									e.CursorX = e.Cols - e.LineCountWidth - 1
-								}
-								// Check bounds before accessing array
-								currentPos := e.CursorX - e.LineCountWidth + e.OffsetX
-								if currentPos >= lineLen {
-									currChar = ' '
-									break
-								}
-								currChar = e.TextBuffer[e.CursorY+e.OffsetY][currentPos]
-							}
-						}
-					}
-
+					e.moveCursorWordRight()
 				case tcell.KeyUp:
-					if e.CursorY > 0 {
-						// Move cursor up within visible area
-						e.CursorY--
-					} else if e.OffsetY > 0 {
-						// Scroll up when cursor is at top
-						e.OffsetY--
-					}
-					currentLine := e.TextBuffer[e.CursorY+e.OffsetY]
-					for len(currentLine) == 0 {
-						if e.CursorY > 0 {
-							// Move cursor up within visible area
-							e.CursorY--
-						} else if e.OffsetY > 0 {
-							// Scroll up when cursor is at top
-							e.OffsetY--
-						}
-						currentLine = e.TextBuffer[e.CursorY+e.OffsetY]
-					}
-					// Adjust cursor X if moving to a shorter line
-					if e.CursorY+e.OffsetY < len(e.TextBuffer) && e.CursorX-e.LineCountWidth > len(e.TextBuffer[e.CursorY+e.OffsetY]) {
-						e.CursorX = len(e.TextBuffer[e.CursorY+e.OffsetY]) + e.LineCountWidth
-					}
+					e.moveCursorUpSkipEmpty()
 				case tcell.KeyDown:
-					if e.CursorY < e.Rows-1 && e.CursorY+e.OffsetY+1 < len(e.TextBuffer) {
-						// Move cursor down within visible area
-						e.CursorY++
-					} else if e.OffsetY+e.Rows < len(e.TextBuffer) {
-						// Scroll down when cursor is at bottom
-						e.OffsetY++
-					}
-
-					currentLine := e.TextBuffer[e.CursorY+e.OffsetY]
-					for len(currentLine) == 0 {
-						if e.CursorY < e.Rows-1 && e.CursorY+e.OffsetY+1 < len(e.TextBuffer) {
-							// Move cursor down within visible area
-							e.CursorY++
-						} else if e.OffsetY+e.Rows < len(e.TextBuffer) {
-							// Scroll down when cursor is at bottom
-							e.OffsetY++
-						}
-						currentLine = e.TextBuffer[e.CursorY+e.OffsetY]
-					}
-					// Adjust cursor X if moving to a shorter line
-					if e.CursorY+e.OffsetY < len(e.TextBuffer) && e.CursorX-e.LineCountWidth > len(e.TextBuffer[e.CursorY+e.OffsetY]) {
-						e.CursorX = len(e.TextBuffer[e.CursorY+e.OffsetY]) + e.LineCountWidth
-					}
+					e.moveCursorDownSkipEmpty()
 				default:
 				}
 			} else if mod == tcell.ModAlt {
