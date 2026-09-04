@@ -11,6 +11,8 @@ func (e *EditorCore) loopWrite() {
 	for {
 		event := e.Terminal.PollEvent()
 		switch ev := event.(type) {
+		case *tcell.EventResize:
+			e.Terminal.Sync()
 		case *tcell.EventKey:
 			mod, key, ch := ev.Modifiers(), ev.Key(), ev.Rune()
 			if mod == tcell.ModNone {
@@ -263,29 +265,35 @@ func (e *EditorCore) loopWrite() {
 
 			}
 
-			// Ensure cursor stays within bounds
-			if e.CursorY < 0 {
-				e.CursorY = 0
-			}
-
-			if e.CursorY >= e.Rows {
-				e.CursorY = e.Rows - 1
-			}
-
-			if e.CursorX < e.LineCountWidth {
-				e.CursorX = e.LineCountWidth
-			}
-
-			if e.CursorX >= e.Cols+e.LineCountWidth {
-				e.CursorX = e.Cols + e.LineCountWidth - 1
-			}
-
-			e.Terminal.Clear()
-			e.DisplayBuffer()
-			e.DisplayStatus()
-			e.Terminal.ShowCursor(e.cursorScreenX(), e.CursorY)
-			e.Terminal.Show()
 		}
+
+		// Recompute Cols/Rows on every iteration (not just command mode) so
+		// a terminal resize while writing takes effect immediately instead
+		// of only after returning to command mode.
+		e.updateDimensions()
+
+		// Ensure cursor stays within bounds
+		if e.CursorY < 0 {
+			e.CursorY = 0
+		}
+
+		if e.CursorY >= e.Rows {
+			e.CursorY = e.Rows - 1
+		}
+
+		if e.CursorX < e.LineCountWidth {
+			e.CursorX = e.LineCountWidth
+		}
+
+		if e.CursorX >= e.Cols+e.LineCountWidth {
+			e.CursorX = e.Cols + e.LineCountWidth - 1
+		}
+
+		e.Terminal.Clear()
+		e.DisplayBuffer()
+		e.DisplayStatus()
+		e.Terminal.ShowCursor(e.cursorScreenX(), e.CursorY)
+		e.Terminal.Show()
 	}
 }
 

@@ -351,6 +351,9 @@ func (e *EditorCore) loopChangeSettings() {
 		event := e.Terminal.PollEvent()
 		switch ev := event.(type) {
 
+		case *tcell.EventResize:
+			e.Terminal.Sync()
+
 		case *tcell.EventKey:
 			mod, key := ev.Modifiers(), ev.Key()
 			if mod == tcell.ModNone {
@@ -435,6 +438,12 @@ func (e *EditorCore) loopChangeSettings() {
 			}
 
 		}
+
+		// Recompute Cols/Rows every iteration so a terminal resize while in
+		// settings mode takes effect immediately instead of only after
+		// returning to command mode.
+		e.updateDimensions()
+
 		e.Terminal.Clear()
 
 		// Save the updated settings
