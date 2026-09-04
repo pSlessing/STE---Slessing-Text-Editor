@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -229,6 +230,8 @@ func (e *EditorCore) mainLoop() {
 }
 
 func (e *EditorCore) updateDimensions() {
+	e.updateLineCountWidth()
+
 	e.Cols, e.Rows = e.Terminal.Size()
 	// e.Rows is an exclusive bound on buffer rows: the buffer occupies rows
 	// 0..e.Rows-1, and the status bar is drawn at row e.Rows (the one
@@ -238,6 +241,24 @@ func (e *EditorCore) updateDimensions() {
 	e.Cols -= e.LineCountWidth
 	if e.Cols < e.MaxWidth {
 		e.Cols = e.MaxWidth
+	}
+}
+
+// updateLineCountWidth resizes the line-number gutter to fit the largest
+// line number the buffer can currently show, so files that grow past 999
+// lines don't overflow the (previously fixed) 3-character gutter into the
+// text area. CursorX is shifted by the same delta as the width change since
+// it's measured from the start of the gutter (see cursorMovement.go /
+// write.go, which all compute buffer column as CursorX-LineCountWidth).
+func (e *EditorCore) updateLineCountWidth() {
+	width := len(strconv.Itoa(len(e.TextBuffer)))
+	if width < 3 {
+		width = 3
+	}
+
+	if width != e.LineCountWidth {
+		e.CursorX += width - e.LineCountWidth
+		e.LineCountWidth = width
 	}
 }
 
@@ -263,6 +284,7 @@ func (e *EditorCore) handleCommand() {
 	if err := e.ExecuteCommand(cmdName, args); err != nil {
 		e.ShowError(err.Error())
 	}
+	e.updateDimensions()
 	e.render()
 }
 
