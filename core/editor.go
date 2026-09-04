@@ -31,6 +31,7 @@ type EditorCore struct {
 	// Other state
 	InputBuffer   []rune
 	CurrentBranch string
+	Dirty         bool
 
 	LineCountWidth int
 
@@ -169,10 +170,7 @@ func (e *EditorCore) Run(fileToOpen string) {
 		fmt.Printf("Warning: %v\n", err)
 	}
 	if fileToOpen != "" {
-		newTextBuffer, err := e.OpenFile(fileToOpen)
-		if err != nil {
-			e.mainLoop()
-		}
+		newTextBuffer, _ := e.OpenFile(fileToOpen)
 		e.TextBuffer = newTextBuffer
 		e.SourceFile = fileToOpen
 	}

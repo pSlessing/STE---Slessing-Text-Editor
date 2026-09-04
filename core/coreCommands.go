@@ -10,6 +10,9 @@ import (
 )
 
 func (e *EditorCore) cmdCommand(_ *EditorCore, arg []string) error {
+	if len(arg) == 0 {
+		return fmt.Errorf("command requires an argument: cmd <command> [args...]")
+	}
 	cmd := exec.Command(arg[0], arg[1:]...)
 	if cmd.Err != nil {
 		e.PrintMessageStyle(e.Cols/2, e.Rows/2, e.Styles.Error, cmd.Err.Error())
@@ -21,6 +24,15 @@ func (e *EditorCore) cmdCommand(_ *EditorCore, arg []string) error {
 }
 
 func (e *EditorCore) cmdQuit(*EditorCore, []string) error {
+	if e.Dirty {
+		e.PrintMessageStyle((e.Cols/2)-20, e.Rows/2, e.Styles.Error,
+			"Unsaved changes! Press q to quit anyway, any other key to cancel")
+		e.Terminal.Show()
+		event := e.Terminal.PollEvent()
+		if ev, ok := event.(*tcell.EventKey); !ok || ev.Rune() != 'q' {
+			return nil
+		}
+	}
 	e.Terminal.Fini()
 	os.Exit(0)
 	return nil
@@ -33,6 +45,7 @@ func (e *EditorCore) cmdWrite(*EditorCore, []string) error {
 
 func (e *EditorCore) cmdClear(*EditorCore, []string) error {
 	e.TextBuffer = [][]rune{{}}
+	e.Dirty = true
 	return nil
 }
 
@@ -51,6 +64,8 @@ func (e *EditorCore) cmdSave(*EditorCore, []string) error {
 				fmt.Sprintf("Error saving file: %s", err.Error()))
 			e.Terminal.Show()
 			e.Terminal.PollEvent()
+		} else {
+			e.Dirty = false
 		}
 		return nil
 	}
@@ -77,6 +92,7 @@ func (e *EditorCore) cmdSave(*EditorCore, []string) error {
 						e.Terminal.Show()
 						e.Terminal.PollEvent()
 					} else {
+						e.Dirty = false
 						return nil
 					}
 				}
@@ -132,6 +148,7 @@ func (e *EditorCore) cmdSaveAs(*EditorCore, []string) error {
 						e.Terminal.Show()
 						e.Terminal.PollEvent()
 					} else {
+						e.Dirty = false
 						return nil
 					}
 				}

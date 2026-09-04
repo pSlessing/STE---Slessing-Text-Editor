@@ -84,6 +84,7 @@ func (e *EditorCore) OpenFile(filename string) ([][]rune, error) {
 		textBuffer = append(textBuffer, []rune{})
 	}
 	e.SourceFile = filename
+	e.Dirty = false
 	return textBuffer, nil
 }
 

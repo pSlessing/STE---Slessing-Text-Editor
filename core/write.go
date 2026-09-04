@@ -280,7 +280,6 @@ func (e *EditorCore) loopWrite() {
 				e.CursorX = e.Cols + e.LineCountWidth - 1
 			}
 
-			//TODO:termbox.SetCursor(e.CursorX, e.CursorY)
 			e.Terminal.Clear()
 			e.DisplayBuffer()
 			e.DisplayStatus()
@@ -323,6 +322,7 @@ func (e *EditorCore) insertEnter() {
 	e.TextBuffer = newTextBuffer
 	e.CursorX = e.LineCountWidth
 	e.CursorY++
+	e.Dirty = true
 
 }
 
@@ -346,6 +346,7 @@ func (e *EditorCore) insertRune(insertrune rune) {
 	copy(newLine[CursorPosXinBuffer+1:], line[CursorPosXinBuffer:])
 	e.TextBuffer[CursorPosYinBuffer] = newLine
 	e.CursorX++
+	e.Dirty = true
 }
 
 func (e *EditorCore) deleteAtCursor() {
@@ -368,6 +369,7 @@ func (e *EditorCore) deleteAtCursor() {
 			e.TextBuffer = newTextBuffer
 			e.CursorX = prevLineLength + e.LineCountWidth
 			e.CursorY--
+			e.Dirty = true
 			return
 		}
 	} else {
@@ -376,6 +378,7 @@ func (e *EditorCore) deleteAtCursor() {
 			afterSlice := e.TextBuffer[CursorPosYinBuffer][CursorPosXinBuffer:]
 			e.TextBuffer[CursorPosYinBuffer] = append(beforeSlice, afterSlice...)
 			e.CursorX--
+			e.Dirty = true
 			return
 		}
 	}
